@@ -51,7 +51,9 @@ export default function Main() {
             />
             <h2 className="text-xl font-bold">{character.name}</h2>
             <p className="text-gray-600 text-sm mb-4">{character.description}</p>
-                {/* 선택하기 링크 추가 */}
+              <Link to={`/chat/${character.id}`} className="text-blue-500 hover:underline text-sm">
+                {character.name} 선택하기 →
+              </Link>
           </div>
         ))}
 
