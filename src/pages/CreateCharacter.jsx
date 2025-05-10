@@ -1,23 +1,29 @@
-// src/pages/CreateCharacter.jsx
 import React, { useState, useEffect } from "react";
 import { collection, addDoc, getFirestore, doc, getDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom"; 
 import app from "../api/firebase";
-import { seedDefaults } from "../utils/seedDefaults"; // ✅ 초기 기본 이미지 등록 파일
+import { useNavigate } from "react-router-dom";
+import { generatePrompt } from "../utils/generatePrompt"; // 새로 추가됨.
 
 export default function CreateCharacter() {
   const [name, setName] = useState("");
   const [intro, setIntro] = useState("");
+  const [background, setBackground] = useState("");
+  const [relation, setRelation] = useState("");
+  const [style, setStyle] = useState("친근한");
+  const [topicLimit, setTopicLimit] = useState("");
+  const [situationExamples, setSituationExamples] = useState("");
+  const [sharedMemories, setSharedMemories] = useState("");
+  const [callName, setCallName] = useState("");
+  
   const [profileImages, setProfileImages] = useState([]);
   const [cardImages, setCardImages] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState("");
   const [selectedCard, setSelectedCard] = useState("");
-  const db = getFirestore(app);
   const navigate = useNavigate();
 
-  // ✅ 최초 화면 조회 시 기본 이미지 등록
+  const db = getFirestore(app);
+
   useEffect(() => {
-    seedDefaults();
     const fetchImages = async () => {
       const profileDoc = await getDoc(doc(db, "defaults", "profileImages"));
       const cardDoc = await getDoc(doc(db, "defaults", "cardImages"));
@@ -36,33 +42,91 @@ export default function CreateCharacter() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedProfile || !selectedCard) {
+      alert("프로필 이미지를 선택해주세요!");
+      return;
+    }
+
+    const prompt = generatePrompt({ name, background, style, relation, callName, topicLimit, situationExamples, sharedMemories });
+
     await addDoc(collection(db, "characters"), {
       name,
-      description: intro, 
+      description: intro,
+      prompt,
       image: selectedCard,
       profile: selectedProfile,
     });
-    alert("캐릭터 등록 완료!");
-    navigate("/"); 
+    navigate("/");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="이름을 입력하세요 (예: 수아, 하준)"
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
-        required
-      />
-      <input 
-        value={intro} 
-        onChange={(e) => setIntro(e.target.value)} 
-        placeholder="한줄 소개 (예: 상큼발랄 대학생)" 
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition" 
-        required 
-      />
-      <div>
+    <div className="p-8 space-y-8">
+      <h1 className="text-2xl font-bold text-center mb-8">➕ 새 캐릭터 만들기</h1>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="이름을 입력하세요 (예: 수아, 하준)"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+          required
+        />
+        <input 
+          value={intro} 
+          onChange={(e) => setIntro(e.target.value)} 
+          placeholder="한줄 소개 (예. 상큼발랄 대학생)" 
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition" 
+          required 
+        />
+        <textarea
+          value={background}
+          onChange={(e) => setBackground(e.target.value)}
+          placeholder="캐릭터 배경, 직업, 특징 (예: 경영학과 재학 중, 외향적, 커피 매니아)"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition resize-none"
+          required
+        />
+        <input
+          value={relation}
+          onChange={(e) => setRelation(e.target.value)}
+          placeholder="나와 이 캐릭터의 관계 (예: 사수와 친한 후배)"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+          required
+        />
+        <input
+          value={callName}
+          onChange={(e) => setCallName(e.target.value)}
+          placeholder="상대를 부를 때 호칭 (예: 과장님, 지훈 선배)"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+        />
+        <select 
+          value={style} 
+          onChange={(e) => setStyle(e.target.value)} 
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+        >
+          <option>친근한</option>
+          <option>무뚝뚝한</option>
+          <option>정중한</option>
+          <option>유머러스한</option>
+        </select>
+        <textarea
+          value={topicLimit}
+          onChange={(e) => setTopicLimit(e.target.value)}
+          placeholder="대화할 주제나 제한사항 (예: 정치나 경제 주제는 피하기)"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition resize-none"
+        />
+        <textarea
+          value={situationExamples}
+          onChange={(e) => setSituationExamples(e.target.value)}
+          placeholder="상황 예시 (예: 카페에서 우연히 만났을 때 대화)"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition resize-none"
+          required
+        />
+        <textarea
+          value={sharedMemories}
+          onChange={(e) => setSharedMemories(e.target.value)}
+          placeholder="공유된 기억이나 함께한 사건 (예: 같이 프로젝트 했던 기억)"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none transition resize-none"
+        />
+        <div>
           <h2 className="text-lg font-semibold mb-2">프로필 이미지 선택</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {profileImages.map((img) => (
@@ -76,12 +140,8 @@ export default function CreateCharacter() {
             ))}
           </div>
         </div>
-      <button 
-        type="submit" 
-        className="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition"
-      >
-        캐릭터 등록하기
-      </button>
-    </form>
+        <button type="submit" className="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition">캐릭터 등록하기</button>
+      </form>
+    </div>
   );
 }
